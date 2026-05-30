@@ -9,7 +9,6 @@ First public release.
 - Save lyrics as UTF-16 for better iTunes and iPod compatibility.
 - Convert rich lyric JSON lines from sources such as NetEase Cloud Music into readable text.
 - Preserve existing ID3 metadata frames, including title, artist, album, and cover art.
-- Create a `.bak` backup before modifying the MP3.
 - Support macOS Apple Silicon, macOS Intel, Windows 64-bit, and Linux 64-bit builds.
 
 ## Usage

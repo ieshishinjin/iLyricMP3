@@ -12,13 +12,12 @@ It writes lyrics directly into the MP3 file's ID3 tag. No new MP3 file is create
 - Writes the plain lyrics into the MP3 `USLT` lyrics frame.
 - Uses UTF-16 lyrics encoding for better iTunes/iPod compatibility.
 - Preserves existing ID3 metadata such as title, artist, album, and cover art.
-- Creates a `.bak` backup before modifying the MP3.
 
 ## Limitations
 
 iTunes and classic iPods generally display plain embedded lyrics, not real-time synchronized LRC lyrics. This tool therefore embeds the lyric text only. The timestamps are removed before writing.
 
-Always keep your own backup of important music files before batch processing. iLyricMP3 modifies the original MP3 file in place and also creates a `.bak` backup next to the MP3.
+Always keep your own backup of important music files before batch processing. iLyricMP3 modifies the original MP3 file in place.
 
 ## Download
 

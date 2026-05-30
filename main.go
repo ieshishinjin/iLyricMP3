@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 	"unicode/utf16"
 )
 
@@ -182,10 +181,6 @@ func writeLyrics(mp3Path string, lyrics string) error {
 	output, err := embedLyrics(data, lyrics)
 	if err != nil {
 		return fmt.Errorf("失败 | %s | %v", mp3Path, err)
-	}
-
-	if err := backupOriginal(mp3Path, data, info.Mode()); err != nil {
-		return fmt.Errorf("失败 | %s | 备份失败: %v", mp3Path, err)
 	}
 
 	if err := os.WriteFile(mp3Path, output, info.Mode()); err != nil {
@@ -507,12 +502,4 @@ func hasNonZeroBytes(data []byte) bool {
 		}
 	}
 	return false
-}
-
-func backupOriginal(path string, data []byte, mode os.FileMode) error {
-	backupPath := path + ".bak"
-	if fileExists(backupPath) {
-		backupPath = fmt.Sprintf("%s.%s.bak", path, time.Now().Format("20060102150405"))
-	}
-	return os.WriteFile(backupPath, data, mode)
 }

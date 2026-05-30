@@ -38,12 +38,6 @@ func TestProcessAllHandlesMultipleInputsWithoutWaiting(t *testing.T) {
 
 	assertFileContains(t, firstMP3, encodeUTF16LE("first lyric"))
 	assertFileContains(t, secondMP3, encodeUTF16LE("second lyric"))
-	if !fileExists(firstMP3 + ".bak") {
-		t.Fatal("expected first backup")
-	}
-	if !fileExists(secondMP3 + ".bak") {
-		t.Fatal("expected second backup")
-	}
 }
 
 func TestEmbedLyricsPreservesID3v23Frames(t *testing.T) {
