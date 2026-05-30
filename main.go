@@ -1,9 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -16,20 +16,52 @@ import (
 var timeTagPattern = regexp.MustCompile(`\[\d{1,2}:\d{2}(?:\.\d{2,3})?\]`)
 
 func main() {
-	defer waitForKey()
-
 	if len(os.Args) < 2 {
-		fmt.Println("请将 .lrc 或 .mp3 文件拖拽到此程序上")
+		fmt.Println("请将一个或多个 .lrc / .mp3 文件拖拽到此程序上")
 		return
 	}
 
-	inputPath := os.Args[1]
-	if err := process(inputPath); err != nil {
-		fmt.Println(err.Error())
+	if failed := processAll(os.Args[1:]); failed > 0 {
+		os.Exit(1)
 	}
 }
 
-func process(inputPath string) error {
+func processAll(inputPaths []string) int {
+	seen := make(map[string]bool)
+	succeeded := 0
+	failed := 0
+
+	for _, inputPath := range inputPaths {
+		lrcPath, mp3Path, err := resolveInput(inputPath)
+		if err != nil {
+			fmt.Println(err.Error())
+			failed++
+			continue
+		}
+
+		key, err := filepath.Abs(mp3Path)
+		if err != nil {
+			key = mp3Path
+		}
+		if seen[key] {
+			fmt.Printf("跳过 | %s | 已处理同名音频\n", inputPath)
+			continue
+		}
+		seen[key] = true
+
+		if err := processPair(lrcPath, mp3Path); err != nil {
+			fmt.Println(err.Error())
+			failed++
+			continue
+		}
+		succeeded++
+	}
+
+	fmt.Printf("完成 | 成功 %d | 失败 %d\n", succeeded, failed)
+	return failed
+}
+
+func resolveInput(inputPath string) (string, string, error) {
 	ext := strings.ToLower(filepath.Ext(inputPath))
 
 	var lrcPath, mp3Path string
@@ -41,23 +73,18 @@ func process(inputPath string) error {
 		mp3Path = inputPath
 		lrcPath = replaceExt(inputPath, ".lrc")
 	default:
-		return fmt.Errorf("失败 | %s | 请拖拽 .lrc 或 .mp3 文件", inputPath)
+		return "", "", fmt.Errorf("失败 | %s | 请拖拽 .lrc 或 .mp3 文件", inputPath)
 	}
 
-	if ext == ".mp3" {
-		if !fileExists(lrcPath) {
-			return fmt.Errorf("失败 | %s | 找不到对应的歌词文件", mp3Path)
-		}
-		if !fileExists(mp3Path) {
-			return fmt.Errorf("失败 | %s | 打开失败: %v", mp3Path, os.ErrNotExist)
-		}
-	} else {
-		if !fileExists(mp3Path) {
-			return fmt.Errorf("失败 | %s | 找不到对应的音频文件", lrcPath)
-		}
-		if !fileExists(lrcPath) {
-			return fmt.Errorf("失败 | %s | 读取失败: %v", lrcPath, os.ErrNotExist)
-		}
+	return lrcPath, mp3Path, nil
+}
+
+func processPair(lrcPath string, mp3Path string) error {
+	if !fileExists(mp3Path) {
+		return fmt.Errorf("失败 | %s | 找不到对应的音频文件", lrcPath)
+	}
+	if !fileExists(lrcPath) {
+		return fmt.Errorf("失败 | %s | 找不到对应的歌词文件", mp3Path)
 	}
 
 	lyrics, err := readPlainLyrics(lrcPath)
@@ -91,24 +118,54 @@ func readPlainLyrics(lrcPath string) (string, error) {
 		return "", fmt.Errorf("失败 | %s | 读取失败: %v", lrcPath, err)
 	}
 
-	lyrics := timeTagPattern.ReplaceAllString(string(data), "")
-	lyrics = normalizeBlankLines(lyrics)
+	lyrics := normalizeLyrics(string(data))
 
 	return lyrics, nil
 }
 
-func normalizeBlankLines(text string) string {
-	lines := strings.Split(strings.ReplaceAll(text, "\r\n", "\n"), "\n")
+func normalizeLyrics(text string) string {
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	text = strings.ReplaceAll(text, "\r", "\n")
+
+	lines := strings.Split(text, "\n")
 	cleaned := make([]string, 0, len(lines))
 
 	for _, line := range lines {
+		line = timeTagPattern.ReplaceAllString(line, "")
 		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		line = plainLyricLine(line)
 		if line != "" {
 			cleaned = append(cleaned, line)
 		}
 	}
 
 	return strings.TrimSpace(strings.Join(cleaned, "\n"))
+}
+
+func plainLyricLine(line string) string {
+	if !strings.HasPrefix(line, "{") {
+		return line
+	}
+
+	var rich struct {
+		Content []struct {
+			Text string `json:"tx"`
+		} `json:"c"`
+	}
+	if err := json.Unmarshal([]byte(line), &rich); err != nil || len(rich.Content) == 0 {
+		return line
+	}
+
+	var builder strings.Builder
+	for _, part := range rich.Content {
+		builder.WriteString(part.Text)
+	}
+
+	return strings.TrimSpace(builder.String())
 }
 
 func writeLyrics(mp3Path string, lyrics string) error {
@@ -458,21 +515,4 @@ func backupOriginal(path string, data []byte, mode os.FileMode) error {
 		backupPath = fmt.Sprintf("%s.%s.bak", path, time.Now().Format("20060102150405"))
 	}
 	return os.WriteFile(backupPath, data, mode)
-}
-
-func waitForKey() {
-	if !isTerminalInput() {
-		return
-	}
-
-	_, _ = bufio.NewReader(os.Stdin).ReadByte()
-}
-
-func isTerminalInput() bool {
-	info, err := os.Stdin.Stat()
-	if err != nil {
-		return false
-	}
-
-	return info.Mode()&os.ModeCharDevice != 0
 }

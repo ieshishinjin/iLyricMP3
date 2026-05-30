@@ -2,8 +2,49 @@ package main
 
 import (
 	"bytes"
+	"os"
+	"path/filepath"
 	"testing"
 )
+
+func TestNormalizeLyricsExtractsRichLyricText(t *testing.T) {
+	input := `[00:00.00]{"t":0,"c":[{"tx":"作词: "},{"tx":"陶喆","li":"http://example.com","or":"orpheus://artist"}]}
+[00:00.83]{"t":830,"c":[{"tx":"作曲: "},{"tx":"陶喆"}]}
+[00:01.20]David Tao
+`
+
+	got := normalizeLyrics(input)
+	want := "作词: 陶喆\n作曲: 陶喆\nDavid Tao"
+	if got != want {
+		t.Fatalf("normalizeLyrics() = %q, want %q", got, want)
+	}
+}
+
+func TestProcessAllHandlesMultipleInputsWithoutWaiting(t *testing.T) {
+	dir := t.TempDir()
+	firstMP3 := filepath.Join(dir, "first.mp3")
+	firstLRC := filepath.Join(dir, "first.lrc")
+	secondMP3 := filepath.Join(dir, "second.mp3")
+	secondLRC := filepath.Join(dir, "second.lrc")
+
+	writeTestFile(t, firstMP3, []byte{0xFF, 0xFB, 0x90, 0x64})
+	writeTestFile(t, firstLRC, []byte("[00:00.00]first lyric"))
+	writeTestFile(t, secondMP3, []byte{0xFF, 0xFB, 0x90, 0x64})
+	writeTestFile(t, secondLRC, []byte("[00:00.00]second lyric"))
+
+	if failed := processAll([]string{firstMP3, firstLRC, secondMP3}); failed != 0 {
+		t.Fatalf("processAll failed count = %d, want 0", failed)
+	}
+
+	assertFileContains(t, firstMP3, encodeUTF16LE("first lyric"))
+	assertFileContains(t, secondMP3, encodeUTF16LE("second lyric"))
+	if !fileExists(firstMP3 + ".bak") {
+		t.Fatal("expected first backup")
+	}
+	if !fileExists(secondMP3 + ".bak") {
+		t.Fatal("expected second backup")
+	}
+}
 
 func TestEmbedLyricsPreservesID3v23Frames(t *testing.T) {
 	title := buildFrameV23("TIT2", []byte{0x03, 'S', 'o', 'n', 'g'})
@@ -98,4 +139,24 @@ func findFrame(frames [][]byte, id string) []byte {
 		}
 	}
 	return nil
+}
+
+func writeTestFile(t *testing.T, path string, data []byte) {
+	t.Helper()
+
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func assertFileContains(t *testing.T, path string, want []byte) {
+	t.Helper()
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Contains(data, want) {
+		t.Fatalf("%s does not contain expected bytes", path)
+	}
 }

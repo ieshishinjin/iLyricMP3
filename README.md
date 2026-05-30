@@ -8,6 +8,7 @@ It writes lyrics directly into the MP3 file's ID3 tag. No new MP3 file is create
 
 - Finds a same-name `.lrc` and `.mp3` pair in the same folder.
 - Removes LRC time tags such as `[00:12.34]`.
+- Converts rich lyric JSON lines from sources such as NetEase Cloud Music into readable text.
 - Writes the plain lyrics into the MP3 `USLT` lyrics frame.
 - Uses UTF-16 lyrics encoding for better iTunes/iPod compatibility.
 - Preserves existing ID3 metadata such as title, artist, album, and cover art.
@@ -43,7 +44,7 @@ song.mp3
 song.lrc
 ```
 
-Then run iLyricMP3 with either file path:
+Then run iLyricMP3 with one or more file paths:
 
 ```bash
 iLyricMP3 song.lrc
@@ -53,6 +54,12 @@ or:
 
 ```bash
 iLyricMP3 song.mp3
+```
+
+Batch usage:
+
+```bash
+iLyricMP3 song1.mp3 song2.mp3 song3.mp3
 ```
 
 On success, it prints:
@@ -80,6 +87,8 @@ chmod +x /path/to/iLyricMP3-macos-arm64
 ```
 
 You can also type the executable path, add a space, then drag the `.mp3` or `.lrc` file from Finder into the Terminal window. Terminal will insert the file path automatically.
+
+To process multiple songs, type the executable path, add a space, then drag several `.mp3` files into the Terminal window and press Enter. Each MP3 must have a same-name `.lrc` file in the same folder.
 
 If macOS blocks the executable because it was downloaded from the internet, run:
 
