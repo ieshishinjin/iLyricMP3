@@ -34,68 +34,58 @@ Choose the file for your platform:
 | Windows 64-bit | `iLyricMP3-windows-amd64.exe` |
 | Linux 64-bit | `iLyricMP3-linux-amd64` |
 
-## Usage
-
-Put the `.mp3` and `.lrc` files in the same folder with the same base name:
-
-```text
-song.mp3
-song.lrc
-```
-
-Then run iLyricMP3 with one or more file paths:
-
-```bash
-iLyricMP3 song.lrc
-```
-
-or:
-
-```bash
-iLyricMP3 song.mp3
-```
-
-Batch usage:
-
-```bash
-iLyricMP3 song1.mp3 song2.mp3 song3.mp3
-```
-
-On success, it prints:
-
-```text
-成功 | /path/to/song.mp3
-```
-
 ## macOS Usage
 
-On macOS, this is a command-line executable, not a `.app` bundle. The most reliable way to use it is through Terminal.
+1. Open Terminal.
+2. Drag the executable into Terminal.
+3. Type a space.
+4. Drag one or more .mp3 or .lrc files 5. into Terminal.
+5. Press Enter.
 
-For Intel Mac:
-
+Example:
 ```bash
-chmod +x /path/to/iLyricMP3-macos-amd64
-/path/to/iLyricMP3-macos-amd64 /path/to/song.lrc
+/path/to/iLyricMP3-macos-amd64 /path/to/song.mp3
 ```
 
-For Apple Silicon Mac:
+Batch processing:
 
 ```bash
-chmod +x /path/to/iLyricMP3-macos-arm64
-/path/to/iLyricMP3-macos-arm64 /path/to/song.lrc
+/path/to/iLyricMP3-macos-amd64 /path/to/song1.mp3 /path/to/song2.mp3
 ```
 
-You can also type the executable path, add a space, then drag the `.mp3` or `.lrc` file from Finder into the Terminal window. Terminal will insert the file path automatically.
+Each .mp3 file must have a same-name .lrc file in the same folder:
 
-To process multiple songs, type the executable path, add a space, then drag several `.mp3` files into the Terminal window and press Enter. Each MP3 must have a same-name `.lrc` file in the same folder.
+song.mp3
+song.lrc
+## Windows Usage
 
-If macOS blocks the executable because it was downloaded from the internet, run:
+1. Put the .mp3 and same-name .lrc file in the same folder.
+2. Open PowerShell or Command Prompt.
+3. Type or drag the executable into the window.
+4. Type a space.
+5. Drag one or more .mp3 or .lrc files into the window.
+6. Press Enter.
 
+Example:
 ```bash
-xattr -d com.apple.quarantine /path/to/iLyricMP3-macos-amd64
+C:\Tools\iLyricMP3-windows-amd64.exe C:\Music\song.mp3
 ```
 
-Then run the command again.
+Batch processing:
+```bash
+C:\Tools\iLyricMP3-windows-amd64.exe C:\Music\song1.mp3 C:\Music\song2.mp3
+```
+
+You can drag music files from File Explorer into PowerShell or Command Prompt, and Windows will
+insert their paths automatically.
+
+Required file pair:
+
+song.mp3
+song.lrc
+
+After processing, iLyricMP3 modifies the original MP3 file directly. It does not create a new MP3
+file or a .bak backup file.
 
 ## iTunes / Apple Music / iPod Notes
 
