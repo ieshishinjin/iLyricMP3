@@ -1,5 +1,8 @@
 # iLyricMP3
 
+![GitHub Repo stars](https://img.shields.io/github/stars/ieshishinjin/iLyricMP3?style=social)
+
+
 iLyricMP3 is a small command-line tool that embeds `.lrc` lyrics into an `.mp3` file so the lyrics can be displayed by iTunes, Apple Music, and synced iPods.
 
 It writes lyrics directly into the MP3 file's ID3 tag. No new MP3 file is created.
